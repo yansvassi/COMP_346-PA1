@@ -9,7 +9,7 @@
  *
  * @author Kerly Titus
  */
-public class Network {
+public class Network implements Runnable {
     
     private static int maxNbPackets;                           /* Maximum number of simultaneous transactions handled by the network buffer */
     private static int inputIndexClient, inputIndexServer, outputIndexServer, outputIndexClient;                   /* Network buffer indices for accessing the input buffer (inputIndexClient, outputIndexServer) and output buffer (inputIndexServer, outputIndexClient) */
@@ -18,8 +18,8 @@ public class Network {
     private static int portID;                                 /* Port ID of the client application */
     private static String clientConnectionStatus;              /* Client connection status - connected, disconnected, idle */
     private static String serverConnectionStatus;              /* Server connection status - connected, disconnected, idle */
-    private static Transactions inComingPacket[];              /* Incoming network buffer */
-    private static Transactions outGoingPacket[];              /* Outgoing network buffer */
+    private static Transactions[] inComingPacket;              /* Incoming network buffer */ //TODO changed these!
+    private static Transactions[] outGoingPacket;              /* Outgoing network buffer */
     private static String inBufferStatus, outBufferStatus;     /* Current status of the network buffers - normal, full, empty */
     private static String networkStatus;                       /* Network status - active, inactive */
       
@@ -407,9 +407,8 @@ public class Network {
             	System.out.println("\n DEBUG : Network.receive() - outGoingBuffer status " + getOutBufferStatus());
             }
             else
-            	setOutBufferStatus("normal"); 
-            
-             return true;
+            	setOutBufferStatus("normal");
+            return true;
         }   
     
     /**
@@ -556,6 +555,28 @@ public class Network {
     	
     	while (true)
     	{
+            while (getInBufferStatus() == "empty"){
+                if (AppConfig.getThreadingMode().equals(ThreadingMode.BUSY_WAIT)) {
+                    System.out.println("");
+                }
+                else if (AppConfig.getThreadingMode().equals(ThreadingMode.YIELD)) {
+                    System.out.println("");
+                    Thread.yield(); // TODO: do this even make sense doe?
+                }
+            }
+
+            transferIn(inComingPacket[getinputIndexServer()]); // TODO: is it the right index???
+
+            while (getInBufferStatus() == "empty"){
+                if (AppConfig.getThreadingMode().equals(ThreadingMode.BUSY_WAIT)) {
+                    System.out.println("");
+                }
+                else if (AppConfig.getThreadingMode().equals(ThreadingMode.YIELD)) {
+                    System.out.println("");
+                    Thread.yield(); // TODO: do this even make sense doe?
+                }
+            }
+            transferOut(inComingPacket[getoutputIndexServer()]); // TODO: is it the right index???
 		/* Implement the code for the run method */
     	}    
     }
