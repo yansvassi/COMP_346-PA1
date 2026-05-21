@@ -29,7 +29,7 @@ public class Network implements Runnable {
      * @return 
      * @param
      */
-     Network(String context)
+     public Network(String context)
       { 
     	 int i;  
         
@@ -420,27 +420,43 @@ public class Network implements Runnable {
      */
          public boolean transferOut(Transactions outPacket)
         {
+            if (AppConfig.isDebugLogsEnabled()) {
+                System.out.println("[NETWORK] >>> transferOut() to outGoingPacket[" + inputIndexServer + "]");
+            }
+
             outGoingPacket[inputIndexServer].setAccountNumber(outPacket.getAccountNumber());
             outGoingPacket[inputIndexServer].setOperationType(outPacket.getOperationType());
             outGoingPacket[inputIndexServer].setTransactionAmount(outPacket.getTransactionAmount());
             outGoingPacket[inputIndexServer].setTransactionBalance(outPacket.getTransactionBalance());
             outGoingPacket[inputIndexServer].setTransactionError(outPacket.getTransactionError());
             outGoingPacket[inputIndexServer].setTransactionStatus("transferred");
-            
+
             System.out.println("\n DEBUG : Network.transferOut() - index inputIndexServer " + inputIndexServer);
             System.out.println("\n DEBUG : Network.transferOut() - account number " + outGoingPacket[inputIndexServer].getAccountNumber());
-            
+
             setinputIndexServer(((getinputIndexServer() + 1) % getMaxNbPackets())); /* Increment the output buffer index for the server */
+
+            if (AppConfig.isDebugLogsEnabled()) {
+                System.out.println("[NETWORK] After increment: inputIndexServer=" + inputIndexServer);
+            }
+
             /* Check if output buffer is full */
             if ( getinputIndexServer( ) == getoutputIndexClient( ))
             {
                 setOutBufferStatus("full");
-                
+
                 System.out.println("\n DEBUG : Network.transferOut() - outGoingBuffer status " + getOutBufferStatus());
+
+                if (AppConfig.isDebugLogsEnabled()) {
+                    System.out.println("[NETWORK] Output buffer is now FULL");
+                }
             }
-            else
+            else {
                 setOutBufferStatus("normal");
-            
+                if (AppConfig.isDebugLogsEnabled()) {
+                    System.out.println("[NETWORK] Output buffer status: NORMAL");
+                }
+            }
              return true;
         }   
          
@@ -453,27 +469,45 @@ public class Network implements Runnable {
          public boolean transferIn(Transactions inPacket)
         {
 		System.out.println("\n DEBUG : Network.transferIn - account number " + inComingPacket[outputIndexServer].getAccountNumber());
+
+		if (AppConfig.isDebugLogsEnabled()) {
+			System.out.println("[NETWORK] >>> transferIn() from inComingPacket[" + outputIndexServer + "]");
+		}
+
             inPacket.setAccountNumber(inComingPacket[outputIndexServer].getAccountNumber());
             inPacket.setOperationType(inComingPacket[outputIndexServer].getOperationType());
             inPacket.setTransactionAmount(inComingPacket[outputIndexServer].getTransactionAmount());
             inPacket.setTransactionBalance(inComingPacket[outputIndexServer].getTransactionBalance());
             inPacket.setTransactionError(inComingPacket[outputIndexServer].getTransactionError());
             inPacket.setTransactionStatus("received");
-           
+
             System.out.println("\n DEBUG : Network.transferIn() - index outputIndexServer " + outputIndexServer);
             System.out.println("\n DEBUG : Network.transferIn() - account number " + inPacket.getAccountNumber());
-            
-           setoutputIndexServer(((getoutputIndexServer() + 1) % getMaxNbPackets()));	/* Increment the input buffer index for the server */
+
+            setoutputIndexServer(((getoutputIndexServer() + 1) % getMaxNbPackets()));
+
+	if (AppConfig.isDebugLogsEnabled()) {
+		System.out.println("[NETWORK] After increment: outputIndexServer=" + outputIndexServer);
+	}
+
            /* Check if input buffer is empty */
             if ( getoutputIndexServer( ) == getinputIndexClient( ))
             {
                 setInBufferStatus("empty");
-                
+
                 System.out.println("\n DEBUG : Network.transferIn() - inComingBuffer status " + getInBufferStatus());
+
+                if (AppConfig.isDebugLogsEnabled()) {
+                    System.out.println("[NETWORK] Input buffer is now EMPTY");
+                }
             }
-            else
+            else {
                 setInBufferStatus("normal");
-            
+                if (AppConfig.isDebugLogsEnabled()) {
+                    System.out.println("[NETWORK] Input buffer status: NORMAL");
+                }
+            }
+
              return true;
         }   
          
@@ -555,24 +589,15 @@ public class Network implements Runnable {
     	
     	while (true)
     	{
-            while (getInBufferStatus() == "empty"){
-                if (AppConfig.getThreadingMode().equals(ThreadingMode.BUSY_WAIT)) {
-                    System.out.println("");
-                }
-                else if (AppConfig.getThreadingMode().equals(ThreadingMode.YIELD)) {
-                    System.out.println("");
+            while (getInBufferStatus().equals("empty")){
+                if (AppConfig.getThreadingMode().equals(ThreadingMode.YIELD)) {
                     Thread.yield(); // TODO: do this even make sense doe?
                 }
             }
-
             transferIn(inComingPacket[getinputIndexServer()]); // TODO: is it the right index???
 
-            while (getInBufferStatus() == "empty"){
-                if (AppConfig.getThreadingMode().equals(ThreadingMode.BUSY_WAIT)) {
-                    System.out.println("");
-                }
-                else if (AppConfig.getThreadingMode().equals(ThreadingMode.YIELD)) {
-                    System.out.println("");
+            while (getOutBufferStatus().equals("empty")){
+                if (AppConfig.getThreadingMode().equals(ThreadingMode.YIELD)) {
                     Thread.yield(); // TODO: do this even make sense doe?
                 }
             }

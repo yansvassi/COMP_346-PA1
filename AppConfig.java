@@ -2,14 +2,24 @@ import java.util.Scanner;
 
 public class AppConfig {
     private static ThreadingMode threadingMode = ThreadingMode.YIELD;  // Default
-    
+    private static boolean debugLogsEnabled = false;  // Flag to enable/disable new debug logs
+
     public static ThreadingMode getThreadingMode() {
         return threadingMode;
     }
-    
+
     public static void setThreadingMode(ThreadingMode mode) {
         threadingMode = mode;
         System.out.println("Threading mode changed to: " + mode);
+    }
+
+    public static boolean isDebugLogsEnabled() {
+        return debugLogsEnabled;
+    }
+
+    public static void setDebugLogsEnabled(boolean enabled) {
+        debugLogsEnabled = enabled;
+        System.out.println("[CONFIG] Debug logs " + (enabled ? "ENABLED" : "DISABLED"));
     }
 
     /**
@@ -42,10 +52,10 @@ public class AppConfig {
                         validInput = true;
                         break;
                     default:
-                        System.out.println("\n✗ Invalid choice. Please enter 1, 2, or 3.");
+                        System.out.println("\n✗ Invalid choice. Please enter 1, or 2.");
                 }
             } catch (Exception e) {
-                System.out.println("\n✗ Invalid input. Please enter a number (1-3).");
+                System.out.println("\n✗ Invalid input. Please enter a number (1-2).");
                 scanner.nextLine();  // Clear invalid input
             }
         }

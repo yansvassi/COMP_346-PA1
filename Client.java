@@ -155,16 +155,15 @@ public class Client implements Runnable {
         System.out.println("[CLIENT-SEND] === Starting sendTransactions() ===");
         int i = 0;     /* index of transaction array */
 
-        while (i < getNumberOfTransactions()) {
+//        while (i < getNumberOfTransactions()) { TODO: only for debugging
+        while (i < 5) {
             System.out.println("[CLIENT-SEND] Processing transaction " + i + " of " + getNumberOfTransactions());
 
             // Wait for buffer space based on configured threading mode
             while (objNetwork.getInBufferStatus().equals("full")) {
-                System.out.println("[CLIENT-SEND] Buffer is FULL, waiting...");
-                if (AppConfig.getThreadingMode().equals(ThreadingMode.BUSY_WAIT)) {
-                    System.out.println("[CLIENT-SEND] ... using BUSY WAIT mode");
-                } else if (AppConfig.getThreadingMode().equals(ThreadingMode.YIELD)) {
-                    System.out.println("[CLIENT-SEND] ... using YIELD mode, giving CPU to other threads");
+//                System.out.println("[CLIENT-SEND] Buffer is FULL, waiting...");
+                if (AppConfig.getThreadingMode().equals(ThreadingMode.YIELD)) {
+                    System.out.println("[CLIENT-SEND] ... using YIELD mode");
                     Thread.yield();
                 }
             }
@@ -175,7 +174,18 @@ public class Client implements Runnable {
             System.out.println("[CLIENT-SEND] >> Sending transaction " + i + " for account " + transaction[i].getAccountNumber()
                     + " (Operation: " + transaction[i].getOperationType() + ", Amount: " + transaction[i].getTransactionAmount() + ")");
 
-            objNetwork.send(transaction[i]);                            /* Transmit current transaction */
+            if (AppConfig.isDebugLogsEnabled()) {
+                System.out.println("[CLIENT] [SEND] Calling network.send() for transaction " + i);
+                System.out.println("[CLIENT] [SEND] Input buffer status: " + objNetwork.getInBufferStatus() +
+                                 " | inputIndexClient=" + objNetwork.getinputIndexClient() +
+                                 ", outputIndexServer=" + objNetwork.getoutputIndexServer());
+            }
+
+            objNetwork.send(transaction[i]);
+
+            if (AppConfig.isDebugLogsEnabled()) {
+                System.out.println("[CLIENT] [SEND] After send - Input buffer status: " + objNetwork.getInBufferStatus());
+            }
             System.out.println("[CLIENT-SEND] >> Transaction " + i + " sent successfully");
             i++;
         }
@@ -197,7 +207,8 @@ public class Client implements Runnable {
         System.out.println("[CLIENT-RECEIVE] === Starting receiveTransactions() ===");
         int i = 0;     /* Index of transaction array */
 
-        while (i < getNumberOfTransactions()) {
+//        while (i < getNumberOfTransactions()) { // TODO: only for debugging
+        while (i < 5) {
             System.out.println("[CLIENT-RECEIVE] Waiting for transaction " + i + " from network...");
 
             // Wait for transaction if buffer is empty
@@ -209,7 +220,19 @@ public class Client implements Runnable {
             }
 
             System.out.println("[CLIENT-RECEIVE] << Receiving transaction " + i);
-            objNetwork.receive(transact);                                /* Receive updated transaction from the network buffer */
+
+            if (AppConfig.isDebugLogsEnabled()) {
+                System.out.println("[CLIENT] [RECEIVE] Calling network.receive() for transaction " + i);
+                System.out.println("[CLIENT] [RECEIVE] Output buffer status: " + objNetwork.getOutBufferStatus() +
+                                 " | outputIndexClient=" + objNetwork.getoutputIndexClient() +
+                                 ", inputIndexServer=" + objNetwork.getinputIndexServer());
+            }
+
+            objNetwork.receive(transact);
+
+            if (AppConfig.isDebugLogsEnabled()) {
+                System.out.println("[CLIENT] [RECEIVE] After receive - Output buffer status: " + objNetwork.getOutBufferStatus());
+            }
 
             System.out.println("[CLIENT-RECEIVE] << Transaction " + i + " received for account " + transact.getAccountNumber()
                     + " with new balance: " + transact.getTransactionBalance());

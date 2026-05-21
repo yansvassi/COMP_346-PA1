@@ -32,7 +32,7 @@ public class Driver {
         Thread clientInThread = new Thread(clientIn);
 
         networkThread.start();
-//        serverThread.start();
+        serverThread.start();
         clientOutThread.start();
 //        clientInThread.start();
 

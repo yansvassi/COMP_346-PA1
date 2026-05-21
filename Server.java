@@ -196,34 +196,59 @@ public class Server implements Runnable {
          /* Process the accounts until the client disconnects */
          while ((!objNetwork.getClientConnectionStatus().equals("disconnected")))
          { 
-        	 /* while( (objNetwork.getInBufferStatus().equals("empty"))); */  /* Alternatively, busy-wait until the network input buffer is available */
-        	 
-        	 if (!objNetwork.getInBufferStatus().equals("empty"))
-        	 {
-        		 System.out.println("\n DEBUG : Server.processTransactions() - transferring in account " + trans.getAccountNumber());
-        		 
-        		 objNetwork.transferIn(trans);                              /* Transfer a transaction from the network input buffer */
-             
-        		 accIndex = findAccount(trans.getAccountNumber());
-        		 /* Process deposit operation */
-        		 if (trans.getOperationType().equals("DEPOSIT"))
-        		 {
-        			 newBalance = deposit(accIndex, trans.getTransactionAmount()); 
-        			 trans.setTransactionBalance(newBalance);
-        			 trans.setTransactionStatus("done");
-        			 
-        			 System.out.println("\n DEBUG : Server.processTransactions() - Deposit of " + trans.getTransactionAmount() + " in account " + trans.getAccountNumber());
-        		 }
-        		 else
-        			 /* Process withdraw operation */
-        			 if (trans.getOperationType().equals("WITHDRAW"))
-        			 {
-        				 newBalance = withdraw(accIndex, trans.getTransactionAmount());
-        				 trans.setTransactionBalance(newBalance);
-        				 trans.setTransactionStatus("done");
-        				 
-        				 System.out.println("\n DEBUG : Server.processTransactions() - Withdrawal of " + trans.getTransactionAmount() + " from account " + trans.getAccountNumber());
-        			 }
+        	 while( (objNetwork.getInBufferStatus().equals("empty"))) {  /* Alternatively, busy-wait until the network input buffer is available */
+//                 System.out.println("[SERVER] In buffer is empty, waiting for transactions to process...");
+                 if (AppConfig.getThreadingMode().equals(ThreadingMode.YIELD)) {
+                     Thread.yield(); // TODO: do this even make sense doe?
+                 }
+             }
+        	 if (!objNetwork.getInBufferStatus().equals("empty")) {
+                 System.out.println("\n DEBUG : Server.processTransactions() - transferring in account " + trans.getAccountNumber());
+
+                 if (AppConfig.isDebugLogsEnabled()) {
+                     System.out.println("[SERVER] >>> Starting transaction " + getNumberOfTransactions());
+                     System.out.println("[SERVER] Input buffer status: " + objNetwork.getInBufferStatus() +
+                                      " | outputIndexServer=" + objNetwork.getoutputIndexServer() +
+                                      ", inputIndexClient=" + objNetwork.getinputIndexClient());
+                 }
+
+                 objNetwork.transferIn(trans);
+
+                 if (AppConfig.isDebugLogsEnabled()) {
+                     System.out.println("[SERVER] Transferred in - Account: " + trans.getAccountNumber() +
+                                      ", Type: " + trans.getOperationType() +
+                                      ", Amount: " + trans.getTransactionAmount());
+                 }
+
+                 accIndex = findAccount(trans.getAccountNumber());
+
+                 if (AppConfig.isDebugLogsEnabled()) {
+                     System.out.println("[SERVER] Found account at index " + accIndex);
+                 }
+                 /* Process deposit operation */
+                 if (trans.getOperationType().equals("DEPOSIT")) {
+                     newBalance = deposit(accIndex, trans.getTransactionAmount());
+                     trans.setTransactionBalance(newBalance);
+                     trans.setTransactionStatus("done");
+
+                     System.out.println("\n DEBUG : Server.processTransactions() - Deposit of " + trans.getTransactionAmount() + " in account " + trans.getAccountNumber());
+
+                     if (AppConfig.isDebugLogsEnabled()) {
+                         System.out.println("[SERVER] [DEPOSIT] New balance: " + newBalance);
+                     }
+                 } else
+                     /* Process withdraw operation */
+                     if (trans.getOperationType().equals("WITHDRAW")) {
+                         newBalance = withdraw(accIndex, trans.getTransactionAmount());
+                         trans.setTransactionBalance(newBalance);
+                         trans.setTransactionStatus("done");
+
+                         System.out.println("\n DEBUG : Server.processTransactions() - Withdrawal of " + trans.getTransactionAmount() + " from account " + trans.getAccountNumber());
+
+                         if (AppConfig.isDebugLogsEnabled()) {
+                             System.out.println("[SERVER] [WITHDRAW] New balance: " + newBalance);
+                         }
+                     }
         			 else
         				 /* Process query operation */
         				 if (trans.getOperationType().equals("QUERY"))
@@ -231,15 +256,34 @@ public class Server implements Runnable {
                             newBalance = query(accIndex);
                             trans.setTransactionBalance(newBalance);
                             trans.setTransactionStatus("done");
-                            
+
                             System.out.println("\n DEBUG : Server.processTransactions() - Obtaining balance from account" + trans.getAccountNumber());
+
+                            if (AppConfig.isDebugLogsEnabled()) {
+                                System.out.println("[SERVER] [QUERY] Account balance: " + newBalance);
+                            }
         				 } 
         		        		 
-        		 // while( (objNetwork.getOutBufferStatus().equals("full"))); /* Alternatively,  busy-wait until the network output buffer is available */
-                                                           
+        		 while( (objNetwork.getOutBufferStatus().equals("full"))) { /* Alternatively,  busy-wait until the network output buffer is available */
+                     if (AppConfig.getThreadingMode().equals(ThreadingMode.YIELD)) {
+                         Thread.yield(); // TODO: do this even make sense doe?
+                     }
+                 }
+
         		 System.out.println("\n DEBUG : Server.processTransactions() - transferring out account " + trans.getAccountNumber());
-        		 
-        		 objNetwork.transferOut(trans);                            		/* Transfer a completed transaction from the server to the network output buffer */
+
+        		 if (AppConfig.isDebugLogsEnabled()) {
+        		     System.out.println("[SERVER] Output buffer before: status=" + objNetwork.getOutBufferStatus() +
+        		                      " | inputIndexServer=" + objNetwork.getinputIndexServer() +
+        		                      ", outputIndexClient=" + objNetwork.getoutputIndexClient());
+        		 }
+
+        		 objNetwork.transferOut(trans);
+
+        		 if (AppConfig.isDebugLogsEnabled()) {
+        		     System.out.println("[SERVER] Output buffer after: status=" + objNetwork.getOutBufferStatus());
+        		     System.out.println("[SERVER] <<< Completed transaction " + getNumberOfTransactions());
+        		 }
         		 setNumberOfTransactions( (getNumberOfTransactions() +  1) ); 	/* Count the number of transactions processed */
         	 }
          }
@@ -311,13 +355,21 @@ public class Server implements Runnable {
      * @param
      */
     public void run()
-    {   Transactions trans = new Transactions();
+    {   int i = 0;
+        Transactions trans = new Transactions();
     	long serverStartTime, serverEndTime;
 
     	System.out.println("\n DEBUG : Server.run() - starting server thread " + objNetwork.getServerConnectionStatus());
-    	
-    	/* Implement the code for the run method */
-        
+    	while (objNetwork.getOutBufferStatus().equals("empty") || objNetwork.getInBufferStatus().equals("full")) {
+            if (AppConfig.getThreadingMode().equals(ThreadingMode.YIELD)) {
+                Thread.yield(); // TODO: do this even make sense doe?
+            }
+        }
+        while (i < getNumberOfTransactions()) {
+            if (processTransactions(trans)) {
+                i++; //catch if err, err err (same transaction)
+            }
+        }
 //        System.out.println("\n Terminating server thread - " + " Running time " + (serverEndTime - serverStartTime) + " milliseconds");
            
     }

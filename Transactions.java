@@ -162,7 +162,7 @@ public class Transactions {
      */
      public void setTransactionStatus(String transStatus)
      { 
-         transactionStatus = transStatus; //TODO: point this out to TA
+         transactionStatus = transStatus; 
      }
      
     /**
