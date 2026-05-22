@@ -29,29 +29,20 @@ public class Client implements Runnable {
      * @param operation "sending" or "receiving"
      */
     public Client(String operation) {
-        System.out.println("[CLIENT] Creating new Client with operation: " + operation);
 
         if (operation.equals("sending")) {
-            System.out.println("[CLIENT-SEND] Initializing client sending application ...");
             numberOfTransactions = 0;
             maxNbTransactions = 100;
             transaction = new Transactions[maxNbTransactions];
             objNetwork = new Network("client");
             clientOperation = operation;
-            System.out.println("[CLIENT-SEND] Reading transactions from file ...");
             readTransactions();
-            System.out.println("[CLIENT-SEND] Connecting to network ...");
             String cip = objNetwork.getClientIP();
-            System.out.println("[CLIENT-SEND] Client IP: " + cip);
             if (!(objNetwork.connect(cip))) {
-                System.out.println("[CLIENT-SEND] ERROR: Network unavailable!");
                 System.exit(0);
             }
-            System.out.println("[CLIENT-SEND] ✓ Successfully connected to network");
         } else if (operation.equals("receiving")) {
-            System.out.println("[CLIENT-RECEIVE] Initializing client receiving application ...");
             clientOperation = operation;
-            System.out.println("[CLIENT-RECEIVE] Ready to receive transactions");
         }
     }
 
@@ -102,16 +93,12 @@ public class Client implements Runnable {
      * @return
      */
     public void readTransactions() {
-        System.out.println("[CLIENT-SEND] === Starting readTransactions() ===");
         Scanner inputStream = null;     /* Transactions input file stream */
         int i = 0;                      /* Index of transactions array */
 
         try {
             inputStream = new Scanner(new FileInputStream("transaction.txt"));
-            System.out.println("[CLIENT-SEND] Successfully opened transaction.txt");
         } catch (FileNotFoundException e) {
-            System.out.println("[CLIENT-SEND] ERROR: File transaction.txt was not found");
-            System.out.println("[CLIENT-SEND] ERROR: Could not be opened.");
             System.exit(0);
         }
         while (inputStream.hasNextLine()) {
@@ -122,20 +109,13 @@ public class Client implements Runnable {
                 transaction[i].setTransactionAmount(inputStream.nextDouble());  /* Read transaction amount */
                 transaction[i].setTransactionStatus("pending");                 /* Set current transaction status */
 
-                System.out.println("[CLIENT-SEND] Transaction[" + i + "]: Account=" + transaction[i].getAccountNumber()
-                        + ", Type=" + transaction[i].getOperationType()
-                        + ", Amount=" + transaction[i].getTransactionAmount()
-                        + ", Status=" + transaction[i].getTransactionStatus());
                 i++;
             } catch (InputMismatchException e) {
-                System.out.println("[CLIENT-SEND] ERROR: Line " + i + " in transaction.txt has invalid input");
                 System.exit(0);
             }
 
         }
         setNumberOfTransactions(i);        /* Record the number of transactions processed */
-        System.out.println("[CLIENT-SEND] === Finished readTransactions() ===");
-        System.out.println("[CLIENT-SEND] Total transactions loaded: " + getNumberOfTransactions());
 
         inputStream.close();
 
@@ -152,45 +132,25 @@ public class Client implements Runnable {
      * @return
      */
     public void sendTransactions() {
-        System.out.println("[CLIENT-SEND] === Starting sendTransactions() ===");
         int i = 0;     /* index of transaction array */
 
 //        while (i < getNumberOfTransactions()) { TODO: only for debugging
         while (i < 5) {
-            System.out.println("[CLIENT-SEND] Processing transaction " + i + " of " + getNumberOfTransactions());
 
             // Wait for buffer space based on configured threading mode
             while (objNetwork.getInBufferStatus().equals("full")) {
 //                System.out.println("[CLIENT-SEND] Buffer is FULL, waiting...");
                 if (AppConfig.getThreadingMode().equals(ThreadingMode.YIELD)) {
-                    System.out.println("[CLIENT-SEND] ... using YIELD mode");
                     Thread.yield();
                 }
             }
 
-            System.out.println("[CLIENT-SEND] Buffer has space, sending transaction...");
             transaction[i].setTransactionStatus("sent");   /* Set current transaction status */
-
-            System.out.println("[CLIENT-SEND] >> Sending transaction " + i + " for account " + transaction[i].getAccountNumber()
-                    + " (Operation: " + transaction[i].getOperationType() + ", Amount: " + transaction[i].getTransactionAmount() + ")");
-
-            if (AppConfig.isDebugLogsEnabled()) {
-                System.out.println("[CLIENT] [SEND] Calling network.send() for transaction " + i);
-                System.out.println("[CLIENT] [SEND] Input buffer status: " + objNetwork.getInBufferStatus() +
-                                 " | inputIndexClient=" + objNetwork.getinputIndexClient() +
-                                 ", outputIndexServer=" + objNetwork.getoutputIndexServer());
-            }
 
             objNetwork.send(transaction[i]);
 
-            if (AppConfig.isDebugLogsEnabled()) {
-                System.out.println("[CLIENT] [SEND] After send - Input buffer status: " + objNetwork.getInBufferStatus());
-            }
-            System.out.println("[CLIENT-SEND] >> Transaction " + i + " sent successfully");
             i++;
         }
-        System.out.println("[CLIENT-SEND] === Finished sendTransactions() ===");
-        System.out.println("[CLIENT-SEND] All " + getNumberOfTransactions() + " transactions sent");
     }
 
     /************************************************************************************************************************************************
@@ -204,44 +164,22 @@ public class Client implements Runnable {
      * @return
      */
     public void receiveTransactions(Transactions transact) {
-        System.out.println("[CLIENT-RECEIVE] === Starting receiveTransactions() ===");
         int i = 0;     /* Index of transaction array */
 
 //        while (i < getNumberOfTransactions()) { // TODO: only for debugging
         while (i < 5) {
-            System.out.println("[CLIENT-RECEIVE] Waiting for transaction " + i + " from network...");
 
             // Wait for transaction if buffer is empty
             while (objNetwork.getOutBufferStatus().equals("empty")) {
-                System.out.println("[CLIENT-RECEIVE] Output buffer is EMPTY, waiting...");
                 if (AppConfig.getThreadingMode().equals(ThreadingMode.YIELD)) {
                     Thread.yield();
                 }
             }
 
-            System.out.println("[CLIENT-RECEIVE] << Receiving transaction " + i);
-
-            if (AppConfig.isDebugLogsEnabled()) {
-                System.out.println("[CLIENT] [RECEIVE] Calling network.receive() for transaction " + i);
-                System.out.println("[CLIENT] [RECEIVE] Output buffer status: " + objNetwork.getOutBufferStatus() +
-                                 " | outputIndexClient=" + objNetwork.getoutputIndexClient() +
-                                 ", inputIndexServer=" + objNetwork.getinputIndexServer());
-            }
-
             objNetwork.receive(transact);
 
-            if (AppConfig.isDebugLogsEnabled()) {
-                System.out.println("[CLIENT] [RECEIVE] After receive - Output buffer status: " + objNetwork.getOutBufferStatus());
-            }
-
-            System.out.println("[CLIENT-RECEIVE] << Transaction " + i + " received for account " + transact.getAccountNumber()
-                    + " with new balance: " + transact.getTransactionBalance());
-
-            System.out.println("[CLIENT-RECEIVE] Transaction details: " + transact);
             i++;
         }
-        System.out.println("[CLIENT-RECEIVE] === Finished receiveTransactions() ===");
-        System.out.println("[CLIENT-RECEIVE] All " + getNumberOfTransactions() + " transactions received");
     }
 
     /**
@@ -265,34 +203,19 @@ public class Client implements Runnable {
      * @return
      */
     public void run() {
-        System.out.println("[CLIENT] === Client thread started ===");
-        System.out.println("[CLIENT] Client operation mode: " + clientOperation);
-
         Transactions transact = new Transactions();
         long sendClientStartTime = 0, sendClientEndTime = 0, receiveClientStartTime = 0, receiveClientEndTime = 0;
 
         if (clientOperation.equals("sending")) {
-            System.out.println("[CLIENT-SEND] Entering SEND mode");
             if (numberOfTransactions != 0) {
                 sendClientStartTime = System.currentTimeMillis();
-                System.out.println("[CLIENT-SEND] Start time: " + sendClientStartTime);
                 sendTransactions();
                 sendClientEndTime = System.currentTimeMillis();
-                System.out.println("[CLIENT-SEND] End time: " + sendClientEndTime);
-                System.out.println("[CLIENT-SEND] Total time: " + (sendClientEndTime - sendClientStartTime) + " ms");
-            } else {
-                System.out.println("[CLIENT-SEND] No transactions to send!");
             }
         } else if (clientOperation.equals("receiving")) {
-            System.out.println("[CLIENT-RECEIVE] Entering RECEIVE mode");
             receiveClientStartTime = System.currentTimeMillis();
-            System.out.println("[CLIENT-RECEIVE] Start time: " + receiveClientStartTime);
             receiveTransactions(transact);
             receiveClientEndTime = System.currentTimeMillis();
-            System.out.println("[CLIENT-RECEIVE] End time: " + receiveClientEndTime);
-            System.out.println("[CLIENT-RECEIVE] Total time: " + (receiveClientEndTime - receiveClientStartTime) + " ms");
         }
-
-        System.out.println("[CLIENT] === Client thread finished ===");
     }
 }

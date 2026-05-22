@@ -154,9 +154,11 @@ public class Server implements Runnable {
             i++;
         }
         setNumberOfAccounts(i);			/* Record the number of accounts processed */
-        
-        System.out.println("\n DEBUG : Server.initializeAccounts() " + getNumberOfAccounts() + " accounts processed");
-        
+
+        if (AppConfig.isDebugLogsEnabled()) {
+            System.out.println("\n DEBUG : Server.initializeAccounts() " + getNumberOfAccounts() + " accounts processed");
+        }
+
         inputStream.close( );
      }
          
@@ -203,38 +205,22 @@ public class Server implements Runnable {
                  }
              }
         	 if (!objNetwork.getInBufferStatus().equals("empty")) {
-                 System.out.println("\n DEBUG : Server.processTransactions() - transferring in account " + trans.getAccountNumber());
-
                  if (AppConfig.isDebugLogsEnabled()) {
-                     System.out.println("[SERVER] >>> Starting transaction " + getNumberOfTransactions());
-                     System.out.println("[SERVER] Input buffer status: " + objNetwork.getInBufferStatus() +
-                                      " | outputIndexServer=" + objNetwork.getoutputIndexServer() +
-                                      ", inputIndexClient=" + objNetwork.getinputIndexClient());
+                     System.out.println("\n DEBUG : Server.processTransactions() - transferring in account " + trans.getAccountNumber());
                  }
 
                  objNetwork.transferIn(trans);
 
-                 if (AppConfig.isDebugLogsEnabled()) {
-                     System.out.println("[SERVER] Transferred in - Account: " + trans.getAccountNumber() +
-                                      ", Type: " + trans.getOperationType() +
-                                      ", Amount: " + trans.getTransactionAmount());
-                 }
-
                  accIndex = findAccount(trans.getAccountNumber());
 
-                 if (AppConfig.isDebugLogsEnabled()) {
-                     System.out.println("[SERVER] Found account at index " + accIndex);
-                 }
                  /* Process deposit operation */
                  if (trans.getOperationType().equals("DEPOSIT")) {
                      newBalance = deposit(accIndex, trans.getTransactionAmount());
                      trans.setTransactionBalance(newBalance);
                      trans.setTransactionStatus("done");
 
-                     System.out.println("\n DEBUG : Server.processTransactions() - Deposit of " + trans.getTransactionAmount() + " in account " + trans.getAccountNumber());
-
                      if (AppConfig.isDebugLogsEnabled()) {
-                         System.out.println("[SERVER] [DEPOSIT] New balance: " + newBalance);
+                         System.out.println("\n DEBUG : Server.processTransactions() - Deposit of " + trans.getTransactionAmount() + " in account " + trans.getAccountNumber());
                      }
                  } else
                      /* Process withdraw operation */
@@ -243,10 +229,8 @@ public class Server implements Runnable {
                          trans.setTransactionBalance(newBalance);
                          trans.setTransactionStatus("done");
 
-                         System.out.println("\n DEBUG : Server.processTransactions() - Withdrawal of " + trans.getTransactionAmount() + " from account " + trans.getAccountNumber());
-
                          if (AppConfig.isDebugLogsEnabled()) {
-                             System.out.println("[SERVER] [WITHDRAW] New balance: " + newBalance);
+                             System.out.println("\n DEBUG : Server.processTransactions() - Withdrawal of " + trans.getTransactionAmount() + " from account " + trans.getAccountNumber());
                          }
                      }
         			 else
@@ -257,10 +241,8 @@ public class Server implements Runnable {
                             trans.setTransactionBalance(newBalance);
                             trans.setTransactionStatus("done");
 
-                            System.out.println("\n DEBUG : Server.processTransactions() - Obtaining balance from account" + trans.getAccountNumber());
-
                             if (AppConfig.isDebugLogsEnabled()) {
-                                System.out.println("[SERVER] [QUERY] Account balance: " + newBalance);
+                                System.out.println("\n DEBUG : Server.processTransactions() - Obtaining balance from account" + trans.getAccountNumber());
                             }
         				 } 
         		        		 
@@ -270,26 +252,19 @@ public class Server implements Runnable {
                      }
                  }
 
-        		 System.out.println("\n DEBUG : Server.processTransactions() - transferring out account " + trans.getAccountNumber());
-
         		 if (AppConfig.isDebugLogsEnabled()) {
-        		     System.out.println("[SERVER] Output buffer before: status=" + objNetwork.getOutBufferStatus() +
-        		                      " | inputIndexServer=" + objNetwork.getinputIndexServer() +
-        		                      ", outputIndexClient=" + objNetwork.getoutputIndexClient());
+        		     System.out.println("\n DEBUG : Server.processTransactions() - transferring out account " + trans.getAccountNumber());
         		 }
 
         		 objNetwork.transferOut(trans);
-
-        		 if (AppConfig.isDebugLogsEnabled()) {
-        		     System.out.println("[SERVER] Output buffer after: status=" + objNetwork.getOutBufferStatus());
-        		     System.out.println("[SERVER] <<< Completed transaction " + getNumberOfTransactions());
-        		 }
         		 setNumberOfTransactions( (getNumberOfTransactions() +  1) ); 	/* Count the number of transactions processed */
         	 }
          }
-         
-         System.out.println("\n DEBUG : Server.processTransactions() - " + getNumberOfTransactions() + " accounts updated");
-              
+
+         if (AppConfig.isDebugLogsEnabled()) {
+             System.out.println("\n DEBUG : Server.processTransactions() - " + getNumberOfTransactions() + " accounts updated");
+         }
+
          return true;
      }
          
@@ -359,13 +334,10 @@ public class Server implements Runnable {
         Transactions trans = new Transactions();
     	long serverStartTime, serverEndTime;
 
-    	System.out.println("\n DEBUG : Server.run() - starting server thread " + objNetwork.getServerConnectionStatus());
-    	while (objNetwork.getOutBufferStatus().equals("empty") || objNetwork.getInBufferStatus().equals("full")) {
-            if (AppConfig.getThreadingMode().equals(ThreadingMode.YIELD)) {
-                Thread.yield(); // TODO: do this even make sense doe?
-            }
-        }
-        while (i < getNumberOfTransactions()) {
+    	if (AppConfig.isDebugLogsEnabled()) {
+    	    System.out.println("\n DEBUG : Server.run() - starting server thread " + objNetwork.getServerConnectionStatus());
+    	}
+        while (i < 10) { //TODO change to the actual condition pertaining to number of transactions processed
             if (processTransactions(trans)) {
                 i++; //catch if err, err err (same transaction)
             }

@@ -2,7 +2,7 @@ import java.util.Scanner;
 
 public class AppConfig {
     private static ThreadingMode threadingMode = ThreadingMode.YIELD;  // Default
-    private static boolean debugLogsEnabled = false;  // Flag to enable/disable new debug logs
+    private static boolean debugLogsEnabled = true;  // Flag to enable/disable new debug logs
 
     public static ThreadingMode getThreadingMode() {
         return threadingMode;

@@ -34,7 +34,7 @@ public class Driver {
         networkThread.start();
         serverThread.start();
         clientOutThread.start();
-//        clientInThread.start();
+        clientInThread.start();
 
     	 /*******************************************************************************************************************************************
     	  * TODO : implement all the operations of main class - activate network and start client (sending & receiving) and server 																					*
