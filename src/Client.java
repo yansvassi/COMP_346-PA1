@@ -120,7 +120,9 @@ public class Client implements Runnable {
 
         }
         setNumberOfTransactions(i);        /* Record the number of transactions processed */
-
+        if (Driver.DEBUG_LOGS_ENABLED) {
+            System.out.println("\n DEBUG : Client.readTransactions() - " + getNumberOfTransactions() + " transactions processed ");
+        }
         inputStream.close();
 
     }
@@ -148,7 +150,9 @@ public class Client implements Runnable {
             }
 
             transaction[i].setTransactionStatus("sent");   /* Set current transaction status */
-
+            if (Driver.DEBUG_LOGS_ENABLED) {
+                System.out.println("\n DEBUG : Client.sendTransactions() - sending transaction on account " + transaction[i].getAccountNumber());
+            }
             objNetwork.send(transaction[i]);
 
             i++;
@@ -168,9 +172,8 @@ public class Client implements Runnable {
     public void receiveTransactions(Transactions transact) {
         int i = 0;     /* Index of transaction array */
 
-        while (i < getNumberOfTransactions()) { // TODO: only for debugging
+        while (i < getNumberOfTransactions()) {
 
-            // Wait for transaction if buffer is empty
             while (objNetwork.getOutBufferStatus().equals("empty")) {
                 if (Driver.USE_YIELD_MODE) {
                     Thread.yield();
@@ -193,10 +196,6 @@ public class Client implements Runnable {
         return ("\n client IP " + objNetwork.getClientIP() + " Connection status" + objNetwork.getClientConnectionStatus() + "Number of transactions " + getNumberOfTransactions());
     }
 
-    /* *********************************************************************************************************************************************
-     * TODO : implement the method Run() to execute the sending and receiving threads and also record the running times 							*
-     * *********************************************************************************************************************************************/
-
     /**
      * Code for the run method
      *
@@ -213,13 +212,14 @@ public class Client implements Runnable {
                 sendTransactions();
                 sendClientEndTime = System.currentTimeMillis();
                 objNetwork.disconnect(objNetwork.getClientIP());
-                System.out.println();
+                System.out.println("\n Terminating client sending thread -  Running time " + (sendClientEndTime - sendClientStartTime) + " milliseconds");
             }
         } else if (clientOperation.equals("receiving")) {
             receiveClientStartTime = System.currentTimeMillis();
             receiveTransactions(transact);
             receiveClientEndTime = System.currentTimeMillis();
             objNetwork.disconnect(objNetwork.getClientIP());
+            System.out.println("\n Terminating client receiving thread -  Running time " + (receiveClientEndTime - receiveClientStartTime) + " milliseconds");
         }
     }
 }

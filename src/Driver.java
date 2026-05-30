@@ -11,7 +11,12 @@
  */
 public class Driver {
     public static final boolean USE_YIELD_MODE = false; // true => use Thread.yield(), false => busy-wait
-    public static final boolean DEBUG_LOGS_ENABLED = false; // enable/disable debug
+    public static final boolean DEBUG_LOGS_ENABLED = true; // enable/disable debug
+
+    /* Busy-waiting generally results in longer overall running times and higher CPU usage because threads
+    continuously consume CPU cycles while waiting. Yield allows waiting threads to give up the CPU, reducing wasted
+    processing time and improving overall system efficiency.
+     */
 
     /** 
      * main class

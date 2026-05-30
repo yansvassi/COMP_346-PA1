@@ -39,7 +39,7 @@ public class Server implements Runnable {
       transaction = new Transactions();
       account = new Accounts[maxNbAccounts];
       objNetwork = new Network("server");
-      System.out.println("\n Inializing the Accounts database ...");
+      System.out.println("\n Initializing the Accounts database ...");
       initializeAccounts( );
       System.out.println("\n Connecting server to network ...");
       if (!(objNetwork.connect(objNetwork.getServerIP())))
@@ -329,11 +329,7 @@ public class Server implements Runnable {
      {	
     	 return ("\n server IP " + objNetwork.getServerIP() + "connection status " + objNetwork.getServerConnectionStatus() + "Number of accounts " + getNumberOfAccounts());
      }
-     
-     /* *********************************************************************************************************************************************
-      * TODO : implement the method Run() to execute the server thread				 																*
-      * *********************************************************************************************************************************************/
-     
+
     /**
      * Code for the run method
      * 

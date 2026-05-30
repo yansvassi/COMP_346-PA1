@@ -18,7 +18,7 @@ public class Network implements Runnable {
     private static int portID;                                 /* Port ID of the client application */
     private static String clientConnectionStatus;              /* Client connection status - connected, disconnected, idle */
     private static String serverConnectionStatus;              /* Server connection status - connected, disconnected, idle */
-    private static Transactions[] inComingPacket;              /* Incoming network buffer */ //TODO changed these!
+    private static Transactions[] inComingPacket;              /* Incoming network buffer */
     private static Transactions[] outGoingPacket;              /* Outgoing network buffer */
     private static String inBufferStatus, outBufferStatus;     /* Current status of the network buffers - normal, full, empty */
     private static String networkStatus;                       /* Network status - active, inactive */
@@ -560,11 +560,7 @@ public class Network implements Runnable {
 	    {
 	        return ("\n Network status: " + getNetworkStatus() + ", Input buffer: " + getInBufferStatus() + ", Output buffer: " + getOutBufferStatus());
 	    }
-    
-     /***********************************************************************************************************************************************
-      * TODO : implement the method Run() to execute the server thread				 																*
-      * *********************************************************************************************************************************************/
-	     
+
     /**
      *  Code for the run method
      * 
