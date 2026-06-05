@@ -211,7 +211,6 @@ public class Client implements Runnable {
                 sendClientStartTime = System.currentTimeMillis();
                 sendTransactions();
                 sendClientEndTime = System.currentTimeMillis();
-                objNetwork.disconnect(objNetwork.getClientIP());
                 System.out.println("\n Terminating client sending thread -  Running time " + (sendClientEndTime - sendClientStartTime) + " milliseconds");
             }
         } else if (clientOperation.equals("receiving")) {
